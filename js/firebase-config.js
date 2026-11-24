@@ -11,7 +11,7 @@
 export const FIREBASE_CONFIG = {
   // Replace with your Firebase Project ID from console.firebase.google.com
   // Example: "spectrum-tracker-2026"
-  projectId: "", 
+  projectId: "spectrum-tracker-2026", 
   
   // Set to true once you paste your projectId above.
   // When false, the application automatically runs in fast local/cached mode.
@@ -140,7 +140,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = FIREBASE_CONFIG.t
  */
 export const FirestoreClient = {
   isConfigured() {
-    return Boolean(FIREBASE_CONFIG.enabled && FIREBASE_CONFIG.projectId && FIREBASE_CONFIG.projectId.trim() !== "");
+    return Boolean(FIREBASE_CONFIG.enabled && FIREBASE_CONFIG. && FIREBASE_CONFIG.projectId.trim() !== "");
   },
 
   /**
