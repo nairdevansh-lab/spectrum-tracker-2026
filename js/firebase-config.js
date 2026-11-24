@@ -1,7 +1,6 @@
 /**
  * SPECTRUM TRACKER — Lightweight Firestore REST API v1 Client
  *
- * Designed specifically for cellular network resilience (Jio 5G / Airtel):
  * - ZERO external gstatic.com WebChannel SDKs (no stream hangs or reload locks)
  * - Native fetch() with strict 5-second AbortController timeouts
  * - Transparent JS Object <-> Firestore Document format serialization
@@ -9,24 +8,19 @@
  */
 
 export const FIREBASE_CONFIG = {
-  // Replace with your Firebase Project ID from console.firebase.google.com
-  // Example: "spectrum-tracker-2026"
-  projectId: "spectrum-tracker-2026", 
-  
-  // Set to true once you paste your projectId above.
-  // When false, the application automatically runs in fast local/cached mode.
+  // Replace with your actual Firebase Project ID from console.firebase.google.com
+  projectId: "spectrum-tracker-2026",
+
+  // Set to true once your Firebase project + Firestore database + rules are set up
   enabled: false,
 
   // REST API Timeout in milliseconds
   timeoutMs: 5000
 };
 
-const BASE_URL = () => 
+const BASE_URL = () =>
   `https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents`;
 
-/**
- * Encodes a JavaScript value to a Firestore REST API typed value object.
- */
 function toFirestoreValue(val) {
   if (val === null || val === undefined) {
     return { nullValue: null };
@@ -60,9 +54,6 @@ function toFirestoreValue(val) {
   return { stringValue: String(val) };
 }
 
-/**
- * Decodes a Firestore REST API typed value object to standard JavaScript.
- */
 function fromFirestoreValue(typedVal) {
   if (!typedVal) return null;
   if ("stringValue" in typedVal) return typedVal.stringValue;
@@ -85,9 +76,6 @@ function fromFirestoreValue(typedVal) {
   return null;
 }
 
-/**
- * Converts a JS data object to a Firestore document structure
- */
 function toFirestoreDocument(data) {
   const fields = {};
   for (const [k, v] of Object.entries(data)) {
@@ -98,9 +86,6 @@ function toFirestoreDocument(data) {
   return { fields };
 }
 
-/**
- * Converts a raw Firestore REST document to a clean JS object with `id`
- */
 function fromFirestoreDocument(rawDoc) {
   const obj = {};
   if (rawDoc.name) {
@@ -115,9 +100,6 @@ function fromFirestoreDocument(rawDoc) {
   return obj;
 }
 
-/**
- * Wrapper around fetch with strict AbortController timeout
- */
 async function fetchWithTimeout(url, options = {}, timeoutMs = FIREBASE_CONFIG.timeoutMs) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -135,17 +117,15 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = FIREBASE_CONFIG.t
   }
 }
 
-/**
- * Firestore REST API Client
- */
 export const FirestoreClient = {
   isConfigured() {
-    return Boolean(FIREBASE_CONFIG.enabled && FIREBASE_CONFIG. && FIREBASE_CONFIG.projectId.trim() !== "");
+    return Boolean(
+      FIREBASE_CONFIG.enabled &&
+      typeof FIREBASE_CONFIG.projectId === "string" &&
+      FIREBASE_CONFIG.projectId.trim() !== ""
+    );
   },
 
-  /**
-   * Fast connection test with 3-second timeout
-   */
   async checkConnection() {
     if (!this.isConfigured()) {
       return { ok: false, offline: true, message: "Firebase not configured (Local Cache Mode)" };
@@ -162,9 +142,6 @@ export const FirestoreClient = {
     }
   },
 
-  /**
-   * Fetches all documents from a Firestore collection
-   */
   async getCollection(collectionName) {
     if (!this.isConfigured()) {
       return { ok: false, offline: true, data: [] };
@@ -196,9 +173,6 @@ export const FirestoreClient = {
     }
   },
 
-  /**
-   * Saves or updates a document in a collection (PATCH)
-   */
   async saveDocument(collectionName, docId, data) {
     if (!this.isConfigured()) {
       return { ok: false, offline: true, data };
@@ -233,9 +207,6 @@ export const FirestoreClient = {
     }
   },
 
-  /**
-   * Deletes a document from a collection
-   */
   async deleteDocument(collectionName, docId) {
     if (!this.isConfigured()) {
       return { ok: false, offline: true };
