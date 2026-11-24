@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // =========================================================================
+    // SPECTRUM TRACKER - FIRESTORE SECURITY RULES
+    // =========================================================================
+    // INSTRUCTIONS FOR PRODUCTION & LIVE DEPLOYMENT:
+    // 1. Go to Firebase Console (https://console.firebase.google.com)
+    // 2. Select your Project -> Firestore Database -> Rules tab
+    // 3. Paste this exact file and click "Publish"
+    //
+    // Note: Since organizer authentication is authenticated via client-side PIN
+    // (Master Admin & Category Coordinator PINs) for fast event operations without
+    // forcing student/teacher Google Account sign-in barriers, public read and
+    // write access is granted to the fest collections below.
+    // =========================================================================
+
+    // Allow public read and write access to fest tracker collections
+    match /fest_events/{eventId} {
+      allow read, write: if true;
+    }
+
+    match /fest_schools/{schoolId} {
+      allow read, write: if true;
+    }
+
+    match /fest_categories/{categoryId} {
+      allow read, write: if true;
+    }
+
+    match /fest_settings/{settingId} {
+      allow read, write: if true;
+    }
+
+    // Default deny for any other unspecified paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

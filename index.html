@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="midnight-stage">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>SPECTRUM 2026 — Inter-School Fest Live Event &amp; Leaderboard Tracker</title>
+  
+  <meta name="description" content="Real-time live event schedule, round stages, winners podium, and inter-school championship leaderboard tracker for school fests.">
+  <meta name="theme-color" content="#0a0d14">
+
+  <!-- Non-blocking Google Fonts with clean system font fallback for instant 0ms first paint on Jio/Airtel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  </noscript>
+
+  <!-- Core Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎪</text></svg>">
+</head>
+<body>
+
+  <!-- Top Navigation & Branding Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <span class="brand-icon" aria-hidden="true">🎪</span>
+        <div class="brand-info">
+          <span class="brand-title" id="fest-title-display">SPECTRUM 2026</span>
+          <span class="brand-subtitle" id="fest-tagline-display">Inter-School Championship Tracker</span>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <!-- Live Connection Status Pill -->
+        <div class="sync-badge cached" id="sync-badge" title="Connection status">
+          <span class="sync-dot"></span>
+          <span id="sync-label">Checking...</span>
+        </div>
+
+        <!-- Manual Refresh Button -->
+        <button class="icon-btn" id="btn-refresh" title="Refresh Live Data" aria-label="Refresh Data">
+          ↻
+        </button>
+
+        <!-- Organizer Mode Button -->
+        <button class="action-btn" id="btn-organizer-toggle" title="Unlock Organizer Access">
+          <span id="organizer-btn-icon">🔒</span>
+          <span id="organizer-btn-text">Organizer Mode</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- View Navigation Tabs -->
+  <nav class="view-tabs-container" aria-label="Main Navigation">
+    <div class="view-tabs">
+      <button class="nav-tab active" data-tab="events" id="tab-events">
+        <span>📅 Events Schedule</span>
+        <span class="tab-badge" id="tab-badge-events">0</span>
+      </button>
+      <button class="nav-tab" data-tab="leaderboard" id="tab-leaderboard">
+        <span>🏆 School Leaderboard</span>
+      </button>
+      <button class="nav-tab" data-tab="winners" id="tab-winners">
+        <span>🥇 Winners Podium</span>
+      </button>
+      <button class="nav-tab" data-tab="themes" id="tab-themes">
+        <span>🎨 Themes &amp; Display</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Interactive KPI Stats Strip -->
+  <section class="kpi-section" aria-label="Event Summary Statistics">
+    <div class="kpi-grid">
+      <div class="stat-card" data-filter="all" id="kpi-total" title="Click to view all events">
+        <div class="stat-details">
+          <span class="stat-label">Total Events</span>
+          <span class="stat-value" id="count-total">0</span>
+        </div>
+        <div class="stat-icon-wrap">📋</div>
+      </div>
+
+      <div class="stat-card live-kpi" data-filter="Live" id="kpi-live" title="Click to view live events">
+        <div class="stat-details">
+          <span class="stat-label">Live Now</span>
+          <span class="stat-value" id="count-live">0</span>
+        </div>
+        <div class="stat-icon-wrap">🔴</div>
+      </div>
+
+      <div class="stat-card judging-kpi" data-filter="Judging" id="kpi-judging" title="Click to view events under judging">
+        <div class="stat-details">
+          <span class="stat-label">Judging</span>
+          <span class="stat-value" id="count-judging">0</span>
+        </div>
+        <div class="stat-icon-wrap">⚖️</div>
+      </div>
+
+      <div class="stat-card upcoming-kpi" data-filter="Upcoming" id="kpi-upcoming" title="Click to view upcoming events">
+        <div class="stat-details">
+          <span class="stat-label">Upcoming</span>
+          <span class="stat-value" id="count-upcoming">0</span>
+        </div>
+        <div class="stat-icon-wrap">⏳</div>
+      </div>
+
+      <div class="stat-card completed-kpi" data-filter="Completed" id="kpi-completed" title="Click to view completed events">
+        <div class="stat-details">
+          <span class="stat-label">Completed</span>
+          <span class="stat-value" id="count-completed">0</span>
+        </div>
+        <div class="stat-icon-wrap">🏁</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Category Filter Pills & Search Bar -->
+  <section class="filter-section">
+    <div class="filter-bar">
+      <!-- Search Input -->
+      <div class="search-wrapper">
+        <span class="search-icon-left" aria-hidden="true">🔍</span>
+        <input 
+          type="text" 
+          id="search-input" 
+          class="search-input" 
+          placeholder="Search event, venue, judge, school, winner..." 
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <button class="search-clear-btn" id="search-clear" aria-label="Clear Search">✕</button>
+      </div>
+
+      <!-- Category Filter Pills (Dynamically populated) -->
+      <div class="category-pills" id="category-pills" role="tablist" aria-label="Categories">
+        <!-- Pills injected by ui.js -->
+      </div>
+    </div>
+
+    <!-- Display Mode Controls Bar -->
+    <div class="view-controls-bar">
+      <div class="toggle-group">
+        <label class="switch-label">
+          <input type="checkbox" id="toggle-compact" class="switch-checkbox">
+          <span>Compact Grid</span>
+        </label>
+        <label class="switch-label">
+          <input type="checkbox" id="toggle-live-only" class="switch-checkbox">
+          <span>Live-Only Focus</span>
+        </label>
+      </div>
+
+      <!-- Organizer Quick Actions Bar (Shown when unlocked) -->
+      <div id="organizer-quick-actions" style="display: none; gap: 0.5rem; align-items: center;">
+        <button class="action-btn primary" id="btn-add-event">
+          <span>+ Add Event</span>
+        </button>
+        <button class="action-btn" id="btn-manage-schools" style="display: none;">
+          <span>🏫 Schools &amp; Rules</span>
+        </button>
+        <button class="action-btn" id="btn-cloud-options" style="display: none;">
+          <span>☁️ Cloud Options</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Multi-View Content Container -->
+  <main class="main-content">
+    
+    <!-- PANE 1: Events Schedule Grid -->
+    <section class="view-pane active" id="pane-events">
+      <div class="events-grid" id="events-grid">
+        <!-- Rendered by ui.js -->
+      </div>
+      <div id="no-events-placeholder" style="display: none; text-align: center; padding: 3rem 1rem; color: var(--text-secondary);">
+        <p style="font-size: 2rem;">🔍</p>
+        <p style="font-size: 1.1rem; font-weight: 700; margin-top: 0.5rem;">No matching events found</p>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Try clearing your search or category filter.</p>
+      </div>
+    </section>
+
+    <!-- PANE 2: Inter-School Championship Leaderboard -->
+    <section class="view-pane" id="pane-leaderboard">
+      <div class="leaderboard-container">
+        <div class="leaderboard-header-bar">
+          <div>
+            <h2 class="leaderboard-title">🏆 Overall School Championship</h2>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.2rem;">
+              Real-time standings based on declared 1st, 2nd, and 3rd place event winners.
+            </p>
+          </div>
+          <div class="points-rule-tag" id="leaderboard-points-rule">
+            Points: 🥇 1st = 10 pts | 🥈 2nd = 7 pts | 🥉 3rd = 5 pts
+          </div>
+        </div>
+
+        <div class="leaderboard-table-wrapper">
+          <table class="leaderboard-table" id="leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 70px; text-align: center;">Rank</th>
+                <th>School Name</th>
+                <th style="text-align: center;">🥇 Gold</th>
+                <th style="text-align: center;">🥈 Silver</th>
+                <th style="text-align: center;">🥉 Bronze</th>
+                <th style="text-align: center;">Won</th>
+                <th style="text-align: center;">Bonus/Pen</th>
+                <th style="text-align: right; width: 110px;">Total Points</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-tbody">
+              <!-- Rendered by ui.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANE 3: Winners Podium -->
+    <section class="view-pane" id="pane-winners">
+      <div class="winners-view-container">
+        <div class="winners-top-bar">
+          <div>
+            <h2 style="font-size: 1.3rem; font-weight: 800;">🥇 Declared Winners &amp; Podium</h2>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">
+              Official declared winners across all completed rounds and events.
+            </p>
+          </div>
+          <button class="action-btn primary" id="btn-export-winners-csv">
+            <span>📥 Export Winners CSV</span>
+          </button>
+        </div>
+
+        <div class="podium-cards-grid" id="winners-podium-grid">
+          <!-- Rendered by ui.js -->
+        </div>
+
+        <div id="no-winners-placeholder" style="display: none; text-align: center; padding: 3rem 1rem; color: var(--text-secondary);">
+          <p style="font-size: 2rem;">🏅</p>
+          <p style="font-size: 1.1rem; font-weight: 700; margin-top: 0.5rem;">No winners declared yet</p>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">As rounds finish and judges submit final scores, podiums will appear here.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANE 4: Themes & Display Settings -->
+    <section class="view-pane" id="pane-themes">
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div>
+          <h2 style="font-size: 1.3rem; font-weight: 800;">🎨 Display Themes</h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">
+            Choose the visual theme that fits your auditorium screen, outdoor projector, or personal viewing preference.
+          </p>
+        </div>
+
+        <div class="theme-options-grid" id="theme-options-grid">
+          <!-- Theme 1: Midnight Stage -->
+          <div class="theme-card-option" data-theme-id="midnight-stage">
+            <div class="theme-preview-palette">
+              <span style="background: #0a0d14;"></span>
+              <span style="background: #182030;"></span>
+              <span style="background: #38bdf8;"></span>
+              <span style="background: #22c55e;"></span>
+            </div>
+            <div class="theme-card-title">Midnight Stage</div>
+            <div class="theme-card-desc">Cyberpunk dark auditorium theme with electric cyan &amp; emerald live glows.</div>
+          </div>
+
+          <!-- Theme 2: Crimson Spotlight -->
+          <div class="theme-card-option" data-theme-id="crimson-spotlight">
+            <div class="theme-preview-palette">
+              <span style="background: #12090d;"></span>
+              <span style="background: #2c1622;"></span>
+              <span style="background: #f43f5e;"></span>
+              <span style="background: #10b981;"></span>
+            </div>
+            <div class="theme-card-title">Crimson Spotlight</div>
+            <div class="theme-card-desc">Dramatic deep crimson &amp; ruby stage lighting for cultural events.</div>
+          </div>
+
+          <!-- Theme 3: Daylight / Projector Light -->
+          <div class="theme-card-option" data-theme-id="daylight-light">
+            <div class="theme-preview-palette">
+              <span style="background: #f8fafc;"></span>
+              <span style="background: #ffffff;"></span>
+              <span style="background: #0284c7;"></span>
+              <span style="background: #15803d;"></span>
+            </div>
+            <div class="theme-card-title">Daylight / Projector Light</div>
+            <div class="theme-card-desc">Ultra high-contrast light theme engineered for outdoor screens and sunny auditoriums.</div>
+          </div>
+
+          <!-- Theme 4: Emerald Arena -->
+          <div class="theme-card-option" data-theme-id="emerald-arena">
+            <div class="theme-preview-palette">
+              <span style="background: #061711;"></span>
+              <span style="background: #123327;"></span>
+              <span style="background: #4ade80;"></span>
+              <span style="background: #facc15;"></span>
+            </div>
+            <div class="theme-card-title">Emerald Arena</div>
+            <div class="theme-card-desc">Sleek tournament green with gold accents for sports &amp; gaming championships.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =========================================================================
+       MODALS & DIALOGS
+       ========================================================================= -->
+
+  <!-- 1. PIN Authentication Modal -->
+  <div class="modal-overlay" id="modal-pin" role="dialog" aria-modal="true" aria-labelledby="pin-modal-title">
+    <div class="modal-card" style="max-width: 360px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="pin-modal-title">Organizer PIN Access</h3>
+        <button class="icon-btn close-modal-btn" data-close-modal="modal-pin" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <p style="font-size: 0.85rem; color: var(--text-secondary);">
+          Enter Master Admin PIN or your Category Coordinator PIN to unlock edit rights.
+        </p>
+
+        <!-- PIN Digit Display Boxes -->
+        <div class="pin-display">
+          <div class="pin-digit-box" id="pin-box-0"></div>
+          <div class="pin-digit-box" id="pin-box-1"></div>
+          <div class="pin-digit-box" id="pin-box-2"></div>
+          <div class="pin-digit-box" id="pin-box-3"></div>
+        </div>
+        <p id="pin-error-msg" style="color: #ef4444; font-size: 0.8rem; min-height: 1.2rem; font-weight: 600;"></p>
+
+        <!-- Interactive Numpad -->
+        <div class="pin-keypad">
+          <button class="pin-key" data-num="1">1</button>
+          <button class="pin-key" data-num="2">2</button>
+          <button class="pin-key" data-num="3">3</button>
+          <button class="pin-key" data-num="4">4</button>
+          <button class="pin-key" data-num="5">5</button>
+          <button class="pin-key" data-num="6">6</button>
+          <button class="pin-key" data-num="7">7</button>
+          <button class="pin-key" data-num="8">8</button>
+          <button class="pin-key" data-num="9">9</button>
+          <button class="pin-key" data-action="clear" style="font-size: 0.85rem;">Clear</button>
+          <button class="pin-key" data-num="0">0</button>
+          <button class="pin-key" data-action="backspace">⌫</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Event Editor Modal (Add/Edit) -->
+  <div class="modal-overlay" id="modal-event-editor" role="dialog" aria-modal="true" aria-labelledby="event-editor-title">
+    <div class="modal-card" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="event-editor-title">Edit Event</h3>
+        <button class="icon-btn close-modal-btn" data-close-modal="modal-event-editor" aria-label="Close">✕</button>
+      </div>
+      <form id="form-event-editor">
+        <div class="modal-body">
+          <input type="hidden" id="edit-event-id">
+
+          <!-- Event Name -->
+          <div class="form-group">
+            <label class="form-label" for="edit-event-name">Event Name *</label>
+            <input type="text" id="edit-event-name" class="form-input" required placeholder="e.g., Code Sprint Hackathon">
+          </div>
+
+          <!-- Category & Format -->
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="edit-event-category">Category *</label>
+              <select id="edit-event-category" class="form-select" required>
+                <!-- Populated by admin.js -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-event-format">Format</label>
+              <input type="text" id="edit-event-format" class="form-input" placeholder="e.g., Solo or Team (3-4)">
+            </div>
+          </div>
+
+          <!-- Status & Auto-Suggest Progress -->
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="edit-event-status">Stage Status *</label>
+              <select id="edit-event-status" class="form-select">
+                <option value="Upcoming">Upcoming</option>
+                <option value="Live">Live</option>
+                <option value="Judging">Judging</option>
+                <option value="Completed">Completed</option>
+                <option value="Delayed">Delayed</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">
+                Stage Progress
+              </label>
+              <div class="range-wrap">
+                <input type="range" id="edit-event-progress" class="range-input" min="0" max="100" step="5" value="0">
+                <span class="range-val-badge" id="edit-progress-badge">0%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Current Round / Stage Note -->
+          <div class="form-group">
+            <label class="form-label" for="edit-event-round">Current Round / Stage Note</label>
+            <input type="text" id="edit-event-round" class="form-input" placeholder="e.g., Round 2: Finalists presenting to judges">
+          </div>
+
+          <!-- Venue & Timings -->
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="edit-event-venue">Venue / Room</label>
+              <input type="text" id="edit-event-venue" class="form-input" placeholder="e.g., Main Auditorium">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-event-duration">Duration / Est. Close</label>
+              <input type="text" id="edit-event-duration" class="form-input" placeholder="e.g., 10:00 AM – 01:00 PM (3 Hrs)">
+            </div>
+          </div>
+
+          <!-- Judges -->
+          <div class="form-group">
+            <label class="form-label" for="edit-event-judges">Assigned Judges (comma-separated)</label>
+            <input type="text" id="edit-event-judges" class="form-input" placeholder="Dr. Sharma, Prof. Verma">
+          </div>
+
+          <!-- Declared Winners Section -->
+          <div style="border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: 0.5rem;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.6rem; color: var(--gold);">
+              🏆 Declared Winners (Feeds Championship Leaderboard)
+            </h4>
+
+            <!-- 1st Place -->
+            <div class="form-row-2" style="margin-bottom: 0.6rem;">
+              <div class="form-group">
+                <label class="form-label" for="edit-winner-1-school">🥇 1st Place School</label>
+                <select id="edit-winner-1-school" class="form-select school-winner-select">
+                  <option value="">— Select Winning School —</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="edit-winner-1-name">1st Place Participant/Team</label>
+                <input type="text" id="edit-winner-1-name" class="form-input" placeholder="Participant or Team Name">
+              </div>
+            </div>
+
+            <!-- 2nd Place -->
+            <div class="form-row-2" style="margin-bottom: 0.6rem;">
+              <div class="form-group">
+                <label class="form-label" for="edit-winner-2-school">🥈 2nd Place School</label>
+                <select id="edit-winner-2-school" class="form-select school-winner-select">
+                  <option value="">— Select Winning School —</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="edit-winner-2-name">2nd Place Participant/Team</label>
+                <input type="text" id="edit-winner-2-name" class="form-input" placeholder="Participant or Team Name">
+              </div>
+            </div>
+
+            <!-- 3rd Place -->
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="edit-winner-3-school">🥉 3rd Place School</label>
+                <select id="edit-winner-3-school" class="form-select school-winner-select">
+                  <option value="">— Select Winning School —</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="edit-winner-3-name">3rd Place Participant/Team</label>
+                <input type="text" id="edit-winner-3-name" class="form-input" placeholder="Participant or Team Name">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="action-btn" id="btn-delete-event" style="display: none; color: #ef4444; border-color: rgba(239, 68, 68, 0.4); margin-right: auto;">
+            🗑 Delete Event
+          </button>
+          <button type="button" class="action-btn close-modal-btn" data-close-modal="modal-event-editor">Cancel</button>
+          <button type="submit" class="action-btn primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. Participating Schools & Point Rules Modal (Master Admin Only) -->
+  <div class="modal-overlay" id="modal-schools-manager" role="dialog" aria-modal="true" aria-labelledby="schools-modal-title">
+    <div class="modal-card" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="schools-modal-title">Schools &amp; Point Rules</h3>
+        <button class="icon-btn close-modal-btn" data-close-modal="modal-schools-manager" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Point Rules Configuration -->
+        <div>
+          <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem;">Point Rules per Event</h4>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="rule-first">🥇 1st Place Points</label>
+              <input type="number" id="rule-first" class="form-input" min="1" max="100" value="10">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="rule-second">🥈 2nd Place Points</label>
+              <input type="number" id="rule-second" class="form-input" min="1" max="100" value="7">
+            </div>
+          </div>
+          <div class="form-row-2" style="margin-top: 0.5rem;">
+            <div class="form-group">
+              <label class="form-label" for="rule-third">🥉 3rd Place Points</label>
+              <input type="number" id="rule-third" class="form-input" min="0" max="100" value="5">
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+              <button class="action-btn primary" id="btn-save-point-rules" style="width: 100%;">
+                Update Point Rules
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schools Management -->
+        <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem;">
+            <h4 style="font-size: 0.95rem; font-weight: 700;">Participating Schools List</h4>
+            <button class="action-btn" id="btn-add-school-row" style="font-size: 0.78rem;">+ Add School</button>
+          </div>
+          <div style="max-height: 240px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+              <thead>
+                <tr style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                  <th style="padding: 0.4rem 0.6rem; text-align: left;">School Name</th>
+                  <th style="padding: 0.4rem 0.6rem; text-align: left; width: 80px;">Code</th>
+                  <th style="padding: 0.4rem 0.6rem; text-align: center; width: 65px;">Bonus</th>
+                  <th style="padding: 0.4rem 0.6rem; text-align: center; width: 65px;">Pen</th>
+                  <th style="padding: 0.4rem 0.6rem; text-align: center; width: 40px;"></th>
+                </tr>
+              </thead>
+              <tbody id="schools-tbody">
+                <!-- Injected by admin.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="action-btn close-modal-btn" data-close-modal="modal-schools-manager">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Cloud Options Modal: Safe Metadata Sync vs Master Reset -->
+  <div class="modal-overlay" id="modal-cloud-options" role="dialog" aria-modal="true" aria-labelledby="cloud-modal-title">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="cloud-modal-title">Cloud &amp; Data Operations</h3>
+        <button class="icon-btn close-modal-btn" data-close-modal="modal-cloud-options" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: var(--radius-sm); padding: 0.85rem;">
+          <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--accent-primary);">
+            🔄 Safe Schedule Metadata Sync
+          </h4>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+            Updates venue, timings, duration, judges, and event names from cloud/schedule source <strong>while strictly preserving active status, progress, round notes, and declared winners</strong>.
+          </p>
+          <button class="action-btn primary" id="btn-safe-sync-schedule" style="margin-top: 0.6rem; width: 100%;">
+            Run Safe Schedule Sync
+          </button>
+        </div>
+
+        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-sm); padding: 0.85rem; margin-top: 0.5rem;">
+          <h4 style="font-size: 0.95rem; font-weight: 700; color: #ef4444;">
+            ⚠️ Master Reset to Clean Defaults
+          </h4>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">
+            Resets all events, schools, and declared winners back to default sample template. Requires explicit confirmation.
+          </p>
+          <button class="action-btn" id="btn-master-reset" style="margin-top: 0.6rem; width: 100%; color: #ef4444; border-color: rgba(239, 68, 68, 0.4);">
+            Master Reset (Wipes Current Stage Data)
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="action-btn close-modal-btn" data-close-modal="modal-cloud-options">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>⚡ Powered by <strong>Spectrum Tracker</strong> • Instant Mobile Zero-Hang Engine</p>
+    <p style="margin-top: 0.25rem;">Built with HTML5, CSS3 &amp; ES Modules • Ready for GitHub + Netlify</p>
+  </footer>
+
+  <!-- Application Entry Point (Non-blocking at end of body) -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
