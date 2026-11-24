@@ -12,7 +12,7 @@ export const FIREBASE_CONFIG = {
   projectId: "spectrum-tracker-2026",
 
   // Set to true once your Firebase project + Firestore database + rules are set up
-  enabled: false,
+  enabled: true,
 
   // REST API Timeout in milliseconds
   timeoutMs: 5000
